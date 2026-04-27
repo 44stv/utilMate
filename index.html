@@ -1,0 +1,360 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body, #app { font-family: 'Rajdhani', sans-serif; background: #0d0f12; color: #e0e0e0; min-height: 100vh; }
+  .screen { display: none; padding: 0; }
+  .screen.active { display: block; }
+
+  /* MAP LIST */
+  .header { background: #0d0f12; padding: 14px 16px 10px; border-bottom: 1px solid #1e2229; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #f0b429; }
+  .header p { font-size: 11px; color: #666; letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+  .maps-grid { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .map-card { background: #13161b; border: 1px solid #1e2229; border-radius: 10px; overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.1s; position: relative; }
+  .map-card:active { transform: scale(0.97); }
+  .map-card:hover { border-color: #f0b429; }
+  .map-thumb { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: #1a1e25; position: relative; }
+  .map-thumb-img { width: 100%; height: 100%; display: block; }
+  .map-info { padding: 10px 12px; }
+  .map-name { font-size: 15px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #f0e0b0; }
+  .map-meta { font-size: 11px; color: #888; margin-top: 3px; letter-spacing: 0.5px; }
+  .lineup-badge { position: absolute; top: 8px; right: 8px; background: #f0b429; color: #0d0f12; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.5px; }
+
+  /* MAP DETAIL */
+  .back-bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: #0d0f12; border-bottom: 1px solid #1e2229; cursor: pointer; position: sticky; top: 0; z-index: 20; }
+  .back-bar span { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #f0b429; }
+  .back-arr { color: #f0b429; font-size: 16px; line-height: 1; }
+  .map-detail-name { font-size: 18px; font-weight: 700; letter-spacing: 2px; color: #f0e0b0; margin-left: auto; text-transform: uppercase; }
+
+  .minimap-wrap { position: relative; margin: 16px; background: #13161b; border: 1px solid #1e2229; border-radius: 10px; overflow: hidden; }
+  .minimap-svg { width: 100%; display: block; }
+
+  .legend { display: flex; gap: 12px; padding: 0 16px 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #888; letter-spacing: 0.5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  .lineup-list { padding: 0 16px 80px; }
+  .lineup-list h3 { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #666; margin-bottom: 10px; }
+  .lineup-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: #13161b; border: 1px solid #1e2229; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+  .lineup-row:hover { border-color: #f0b429; }
+  .lineup-row-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .lineup-row-info { flex: 1; }
+  .lineup-row-title { font-size: 13px; font-weight: 700; color: #e0d0b0; letter-spacing: 0.5px; }
+  .lineup-row-sub { font-size: 11px; color: #666; margin-top: 2px; }
+  .lineup-row-arr { color: #444; font-size: 14px; }
+
+  /* POPUP OVERLAY */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: flex-end; justify-content: center; }
+  .overlay.open { display: flex; }
+  .popup { background: #13161b; border: 1px solid #2a2f38; border-radius: 16px 16px 0 0; width: 100%; max-width: 420px; max-height: 90vh; overflow-y: auto; padding: 0 0 32px; }
+  .popup-handle { width: 36px; height: 4px; background: #2a2f38; border-radius: 2px; margin: 12px auto 0; }
+  .popup-header { padding: 14px 16px 10px; border-bottom: 1px solid #1e2229; }
+  .popup-title { font-size: 16px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f0e0b0; }
+  .popup-nade { display: inline-block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; margin-top: 4px; font-weight: 700; }
+  .nade-smoke { background: #1e3a2a; color: #4ecb8d; }
+  .nade-flash { background: #3a3010; color: #f0c040; }
+  .nade-molotov { background: #3a1a0a; color: #f07040; }
+  .nade-he { background: #3a0a0a; color: #f04040; }
+
+  .popup-images { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px 16px; }
+  .popup-img-wrap { background: #0d0f12; border: 1px solid #1e2229; border-radius: 8px; overflow: hidden; }
+  .popup-img-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #888; padding: 6px 8px 4px; }
+  .popup-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: flex; align-items: center; justify-content: center; background: #0d0f12; }
+  .popup-img svg { opacity: 0.2; }
+  .popup-note { margin: 0 16px; background: #0d0f12; border-left: 3px solid #f0b429; border-radius: 0 6px 6px 0; padding: 10px 12px; font-size: 13px; color: #bbb; line-height: 1.6; }
+  .close-btn { width: calc(100% - 32px); margin: 16px 16px 0; background: transparent; border: 1px solid #2a2f38; color: #888; font-family: 'Rajdhani', sans-serif; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; padding: 10px; border-radius: 8px; cursor: pointer; }
+  .close-btn:hover { border-color: #f0b429; color: #f0b429; }
+
+  .add-btn { position: fixed; bottom: 20px; right: 20px; width: 48px; height: 48px; background: #f0b429; border-radius: 50%; border: none; font-size: 24px; color: #0d0f12; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 50; font-weight: 700; }
+</style>
+
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+
+<div id="app">
+  <div id="screen-maps" class="screen active">
+    <div class="header">
+      <h1>CS2 Lineups</h1>
+      <p>Grenade lineup library</p>
+    </div>
+    <div class="maps-grid" id="maps-grid"></div>
+  </div>
+
+  <div id="screen-detail" class="screen">
+    <div class="back-bar" onclick="showMaps()">
+      <span class="back-arr">&#8592;</span>
+      <span>Maps</span>
+      <span class="map-detail-name" id="detail-map-name"></span>
+    </div>
+    <div class="minimap-wrap">
+      <svg class="minimap-svg" id="minimap-svg" viewBox="0 0 340 340"></svg>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#4ecb8d"></div>Smoke</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f0c040"></div>Flash</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f07040"></div>Molotov</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#f04040"></div>HE</div>
+    </div>
+    <div class="lineup-list">
+      <h3>All lineups</h3>
+      <div id="lineup-rows"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePopup(event)">
+  <div class="popup" id="popup">
+    <div class="popup-handle"></div>
+    <div class="popup-header">
+      <div class="popup-title" id="popup-title"></div>
+      <div class="popup-nade" id="popup-nade"></div>
+    </div>
+    <div class="popup-images">
+      <div class="popup-img-wrap">
+        <div class="popup-img-label">Stand here</div>
+        <div class="popup-img" id="popup-img-stand">
+          <svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="20" r="10" fill="none" stroke="#888" stroke-width="2"/><line x1="30" y1="30" x2="30" y2="50" stroke="#888" stroke-width="2"/><line x1="15" y1="38" x2="30" y2="32" stroke="#888" stroke-width="2"/><line x1="45" y1="38" x2="30" y2="32" stroke="#888" stroke-width="2"/><line x1="22" y1="60" x2="30" y2="50" stroke="#888" stroke-width="2"/><line x1="38" y1="60" x2="30" y2="50" stroke="#888" stroke-width="2"/></svg>
+        </div>
+      </div>
+      <div class="popup-img-wrap">
+        <div class="popup-img-label">Aim here</div>
+        <div class="popup-img" id="popup-img-aim">
+          <svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="22" fill="none" stroke="#888" stroke-width="2"/><circle cx="30" cy="30" r="6" fill="none" stroke="#888" stroke-width="2"/><line x1="30" y1="2" x2="30" y2="16" stroke="#888" stroke-width="2"/><line x1="30" y1="44" x2="30" y2="58" stroke="#888" stroke-width="2"/><line x1="2" y1="30" x2="16" y2="30" stroke="#888" stroke-width="2"/><line x1="44" y1="30" x2="58" y2="30" stroke="#888" stroke-width="2"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="popup-note" id="popup-note"></div>
+    <button class="close-btn" onclick="closePopup()">Close</button>
+  </div>
+</div>
+
+<script>
+const NADE_COLORS = { smoke:'#4ecb8d', flash:'#f0c040', molotov:'#f07040', he:'#f04040' };
+
+const MAPS = [
+  {
+    id:'mirage', name:'Mirage', active:true,
+    mapColor:'#1e2a1e',
+    lineups: [
+      { id:1, name:'A Site Smoke', from:'Top Mid', to:'A Site CT', type:'smoke', fx:85, fy:110, tx:255, ty:145, note:'Stand on the corner of the T-ramp box. Aim at the top-right edge of the blue window frame and do a running throw.' },
+      { id:2, name:'Window Smoke', from:'T Spawn', to:'Window Room', type:'smoke', fx:60, fy:210, tx:185, ty:100, note:'Line yourself up with the left edge of the van. Aim just above the satellite dish. Jump throw from stationary.' },
+      { id:3, name:'Jungle Flash', from:'Top Mid', to:'Jungle', type:'flash', fx:90, fy:120, tx:140, ty:80, note:'Stand at the corner of connector stairs. Aim at the white crack on the ceiling. Left-click throw.' },
+      { id:4, name:'B Apartments Smoke', from:'B Short', to:'B Site', type:'smoke', fx:230, fy:230, tx:265, ty:185, note:'Stand in the corner near short B stairs. Aim at the top of the right door frame. Jump throw.' },
+      { id:5, name:'CT Smoke', from:'Mid Catwalk', to:'CT Spawn', type:'smoke', fx:155, fy:155, tx:290, ty:200, note:'Line up with the edge of the sign. Aim just above the far roofline. Running throw left-click.' },
+      { id:6, name:'Jungle Molotov', from:'T Spawn', to:'Jungle', type:'molotov', fx:70, fy:200, tx:145, ty:75, note:'Stand next to the T-spawn wall. Aim at the triangle on the roof. Regular throw (no jump).' },
+    ]
+  },
+  {
+    id:'dust2', name:'Dust II', active:true,
+    mapColor:'#2a2010',
+    lineups: [
+      { id:1, name:'Long A Smoke', from:'T Spawn', to:'Long A Doors', type:'smoke', fx:60, fy:60, tx:240, ty:55, note:'Line up with the left wall of T-spawn. Aim at the lamp post tip. Jump throw.' },
+      { id:2, name:'Short Flash', from:'T Mid', to:'CT Short', type:'flash', fx:170, fy:160, tx:240, ty:110, note:'Stand in mid behind the boxes. Aim above the corner edge. Left-click throw immediately.' },
+      { id:3, name:'B Site Smoke', from:'Upper B Tunnels', to:'B Site Car', type:'smoke', fx:80, fy:240, tx:185, ty:270, note:'Stand in the corner of B tunnels entry. Aim at the top window. Jump throw.' },
+      { id:4, name:'Xbox Smoke', from:'T Mid', to:'Xbox', type:'smoke', fx:160, fy:165, tx:205, ty:140, note:'Walk to the left side of mid. Aim at the right edge of the raised ledge (xbox). Running throw.' },
+      { id:5, name:'A Site CT HE', from:'Long Corner', to:'CT Pit', type:'he', fx:245, fy:60, tx:275, ty:100, note:'Stand at the long corner wall. Aim just above the awning. Right-click throw for distance.' },
+    ]
+  },
+  {
+    id:'inferno', name:'Inferno', active:true,
+    mapColor:'#1a1810',
+    lineups: [
+      { id:1, name:'Banana Smoke', from:'T Spawn', to:'Banana', type:'smoke', fx:55, fy:170, tx:100, ty:240, note:'Line up with the left wall near T-spawn. Aim at the edge of the arch. Jump throw.' },
+      { id:2, name:'A Site Smoke', from:'Apartments', to:'A Site CT', type:'smoke', fx:210, fy:80, tx:255, ty:130, note:'Stand at the bottom of apartments stairs. Aim at the balcony corner. Running throw.' },
+      { id:3, name:'Library Smoke', from:'Mid', to:'Library', type:'smoke', fx:155, fy:165, tx:185, ty:120, note:'Walk to the sign in mid. Aim above the far window. Jump throw left-click.' },
+      { id:4, name:'CT Boost Flash', from:'A Site', to:'CT Spawn', type:'flash', fx:250, fy:140, tx:295, ty:180, note:'Boost onto the pillar. Throw flash over the wall overhand. Turn away before it pops.' },
+      { id:5, name:'Banana Molotov', from:'CT Mid', to:'Car', type:'molotov', fx:140, fy:265, tx:100, ty:245, note:'Stand at CT-side mid corner. Aim at the roof of the car. Regular throw, no jump.' },
+      { id:6, name:'B Site Smoke', from:'B Tunnels', to:'B Site', type:'smoke', fx:75, fy:270, tx:120, ty:275, note:'Line up with the drain pipe. Aim at the left roof corner. Jump throw.' },
+    ]
+  },
+  {
+    id:'nuke', name:'Nuke', active:true,
+    mapColor:'#101820',
+    lineups: [
+      { id:1, name:'Ramp Smoke', from:'Outside', to:'Ramp', type:'smoke', fx:65, fy:100, tx:155, ty:145, note:'Stand at the outside fence corner. Aim at the vent on the roof. Jump throw.' },
+      { id:2, name:'Hut Smoke', from:'T Spawn', to:'Hut', type:'smoke', fx:80, fy:60, tx:120, ty:95, note:'Walk to the left barrier edge. Aim above the orange tank. Running throw.' },
+      { id:3, name:'A Site Flash', from:'Lobby', to:'A Site', type:'flash', fx:195, fy:185, tx:255, ty:145, note:'Stand in lobby doorway. Throw flash over the wall near the crane. Pop flash timing is ~2s.' },
+      { id:4, name:'Catwalk Smoke', from:'T Side', to:'Catwalk', type:'smoke', fx:110, fy:130, tx:175, ty:105, note:'Line up with the yellow stripe. Aim at the roof overhang corner. Jump throw.' },
+    ]
+  },
+  {
+    id:'ancient', name:'Ancient', active:true,
+    mapColor:'#141a10',
+    lineups: [
+      { id:1, name:'A Mid Smoke', from:'T Spawn', to:'A Mid', type:'smoke', fx:70, fy:140, tx:170, ty:130, note:'Stand at the T-mid entrance. Aim at the left pillar top. Jump throw.' },
+      { id:2, name:'B Site Smoke', from:'B Ramp', to:'B Site', type:'smoke', fx:245, fy:200, tx:275, ty:240, note:'Line up at the ramp edge. Aim at the wall behind B site. Running throw.' },
+      { id:3, name:'Temple Flash', from:'Mid', to:'Temple', type:'flash', fx:155, fy:160, tx:195, ty:115, note:'Stand at mid-corner. Throw overhand flash above the arch. Turn away.' },
+    ]
+  },
+  {
+    id:'anubis', name:'Anubis', active:true,
+    mapColor:'#1a1510',
+    lineups: [
+      { id:1, name:'A Site Smoke', from:'A Ramp', to:'A CT', type:'smoke', fx:80, fy:120, tx:230, ty:100, note:'Line up with the palm tree. Aim at the left edge of the statue head. Jump throw.' },
+      { id:2, name:'Canal Flash', from:'T Mid', to:'Canal', type:'flash', fx:160, fy:185, tx:120, ty:210, note:'Stand at mid steps. Throw overhand flash above the bridge. Time for teammates.' },
+      { id:3, name:'B Site Smoke', from:'B Connector', to:'B Site', type:'smoke', fx:220, fy:255, tx:265, ty:225, note:'Walk to the connector pillar. Aim at the corner of the blue wall. Running throw.' },
+      { id:4, name:'Water Molotov', from:'Mid', to:'Water', type:'molotov', fx:155, fy:175, tx:155, ty:230, note:'Stand at the edge of mid platform. Aim directly down at the waterway. No-jump right-click.' },
+    ]
+  },
+];
+
+let currentMap = null;
+let currentLineup = null;
+
+function getMapPath(id) {
+  const paths = {
+    mirage: `<rect x="0" y="0" width="340" height="340" fill="#1a2218"/>
+      <rect x="40" y="40" width="260" height="260" fill="#212e1e" rx="4"/>
+      <rect x="40" y="40" width="260" height="80" fill="#1e2a1a" rx="4"/>
+      <rect x="40" y="200" width="260" height="100" fill="#1e2a1a"/>
+      <rect x="120" y="80" width="100" height="180" fill="#242e20" rx="2"/>
+      <rect x="55" y="55" width="60" height="55" fill="#2a3825" rx="3"/>
+      <rect x="230" y="55" width="55" height="55" fill="#2a3825" rx="3"/>
+      <rect x="55" y="230" width="55" height="55" fill="#2a3825" rx="3"/>
+      <rect x="230" y="230" width="55" height="55" fill="#2a3825" rx="3"/>
+      <rect x="155" y="120" width="30" height="100" fill="#1a2216" rx="2"/>
+      <text x="80" y="88" fill="#4a6040" font-size="9" font-family="monospace">A SITE</text>
+      <text x="248" y="88" fill="#4a6040" font-size="9" font-family="monospace">CT</text>
+      <text x="255" y="258" fill="#4a6040" font-size="9" font-family="monospace">B</text>
+      <text x="148" y="172" fill="#4a6040" font-size="9" font-family="monospace">MID</text>`,
+    dust2: `<rect x="0" y="0" width="340" height="340" fill="#1e1808"/>
+      <rect x="40" y="40" width="260" height="260" fill="#251e0a" rx="4"/>
+      <rect x="40" y="40" width="120" height="80" fill="#2a2210" rx="4"/>
+      <rect x="180" y="220" width="120" height="80" fill="#2a2210" rx="4"/>
+      <rect x="40" y="210" width="80" height="90" fill="#221c0c" rx="2"/>
+      <rect x="220" y="40" width="80" height="90" fill="#221c0c" rx="2"/>
+      <rect x="130" y="130" width="80" height="80" fill="#282010" rx="3"/>
+      <line x1="40" y1="120" x2="300" y2="120" stroke="#1a1408" stroke-width="2"/>
+      <line x1="170" y1="40" x2="170" y2="300" stroke="#1a1408" stroke-width="2"/>
+      <text x="55" y="85" fill="#6a5a30" font-size="9" font-family="monospace">LONG A</text>
+      <text x="222" y="68" fill="#6a5a30" font-size="9" font-family="monospace">A SITE</text>
+      <text x="195" y="255" fill="#6a5a30" font-size="9" font-family="monospace">B SITE</text>
+      <text x="148" y="172" fill="#6a5a30" font-size="9" font-family="monospace">MID</text>`,
+    inferno: `<rect x="0" y="0" width="340" height="340" fill="#1a1608"/>
+      <rect x="40" y="40" width="260" height="260" fill="#221a08" rx="4"/>
+      <rect x="190" y="40" width="110" height="150" fill="#281e0a" rx="4"/>
+      <rect x="40" y="220" width="120" height="80" fill="#281e0a" rx="4"/>
+      <rect x="80" y="100" width="120" height="130" fill="#201806" rx="3"/>
+      <path d="M 90 230 Q 100 200 120 240 Q 140 270 160 250" fill="none" stroke="#302010" stroke-width="8"/>
+      <text x="220" y="115" fill="#6a5020" font-size="9" font-family="monospace">A SITE</text>
+      <text x="55" y="255" fill="#6a5020" font-size="9" font-family="monospace">B SITE</text>
+      <text x="100" y="172" fill="#6a5020" font-size="9" font-family="monospace">BANANA</text>`,
+    nuke: `<rect x="0" y="0" width="340" height="340" fill="#080e14"/>
+      <rect x="40" y="40" width="260" height="260" fill="#0e1820" rx="4"/>
+      <rect x="40" y="40" width="160" height="160" fill="#121e28" rx="4"/>
+      <rect x="140" y="140" width="160" height="160" fill="#121e28" rx="4"/>
+      <rect x="200" y="40" width="100" height="100" fill="#0a1620" rx="3"/>
+      <rect x="40" y="200" width="100" height="100" fill="#0a1620" rx="3"/>
+      <circle cx="200" cy="200" r="30" fill="none" stroke="#1a2c3a" stroke-width="2"/>
+      <text x="55" y="100" fill="#2a4a5a" font-size="9" font-family="monospace">OUTSIDE</text>
+      <text x="210" y="190" fill="#2a4a5a" font-size="9" font-family="monospace">A SITE</text>
+      <text x="50" y="255" fill="#2a4a5a" font-size="9" font-family="monospace">B SITE</text>`,
+    ancient: `<rect x="0" y="0" width="340" height="340" fill="#0e1208"/>
+      <rect x="40" y="40" width="260" height="260" fill="#141a0c" rx="4"/>
+      <rect x="40" y="40" width="130" height="130" fill="#181e10" rx="4"/>
+      <rect x="170" y="170" width="130" height="130" fill="#181e10" rx="4"/>
+      <rect x="120" y="120" width="100" height="100" fill="#161c0e" rx="3"/>
+      <path d="M 80 80 L 130 80 L 130 130 L 80 130 Z" fill="none" stroke="#2a3820" stroke-width="1.5"/>
+      <path d="M 210 210 L 260 210 L 260 260 L 210 260 Z" fill="none" stroke="#2a3820" stroke-width="1.5"/>
+      <text x="52" y="95" fill="#3a5028" font-size="9" font-family="monospace">A SITE</text>
+      <text x="220" y="248" fill="#3a5028" font-size="9" font-family="monospace">B SITE</text>
+      <text x="148" y="172" fill="#3a5028" font-size="9" font-family="monospace">MID</text>`,
+    anubis: `<rect x="0" y="0" width="340" height="340" fill="#12100a"/>
+      <rect x="40" y="40" width="260" height="260" fill="#1a1608" rx="4"/>
+      <rect x="40" y="40" width="200" height="100" fill="#201a0c" rx="4"/>
+      <rect x="160" y="190" width="140" height="110" fill="#201a0c" rx="4"/>
+      <rect x="40" y="190" width="100" height="110" fill="#1c1808"/>
+      <path d="M 40 140 Q 120 130 160 190 Q 200 250 160 300" fill="none" stroke="#302818" stroke-width="12"/>
+      <text x="80" y="80" fill="#5a4a20" font-size="9" font-family="monospace">A SITE</text>
+      <text x="185" y="250" fill="#5a4a20" font-size="9" font-family="monospace">B SITE</text>
+      <text x="148" y="172" fill="#5a4a20" font-size="9" font-family="monospace">CANAL</text>`,
+  };
+  return paths[id] || paths.mirage;
+}
+
+function renderMaps() {
+  const grid = document.getElementById('maps-grid');
+  grid.innerHTML = MAPS.map(m => `
+    <div class="map-card" onclick="showDetail('${m.id}')">
+      <div class="map-thumb" style="background:${m.mapColor}">
+        <svg width="100%" height="100%" viewBox="0 0 340 340" style="display:block">${getMapPath(m.id)}</svg>
+        <span class="lineup-badge">${m.lineups.length}</span>
+      </div>
+      <div class="map-info">
+        <div class="map-name">${m.name}</div>
+        <div class="map-meta">${m.lineups.length} lineups</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function buildMinimapSVG(map) {
+  const svg = document.getElementById('minimap-svg');
+  let html = getMapPath(map.id);
+
+  map.lineups.forEach(l => {
+    const col = NADE_COLORS[l.type];
+    const dx = l.tx - l.fx, dy = l.ty - l.fy;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const ux = dx/len, uy = dy/len;
+    const ex = l.fx + ux*(len-10), ey = l.fy + uy*(len-10);
+    html += `<line x1="${l.fx}" y1="${l.fy}" x2="${ex}" y2="${ey}" stroke="${col}" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="4,3"/>`;
+    html += `<circle cx="${l.fx}" cy="${l.fy}" r="7" fill="${col}" fill-opacity="0.2" stroke="${col}" stroke-width="1.5" style="cursor:pointer" onclick="openPopup(${JSON.stringify(l).replace(/"/g,'&quot;')})"/>`;
+    html += `<circle cx="${l.fx}" cy="${l.fy}" r="3.5" fill="${col}" style="cursor:pointer" onclick="openPopup(${JSON.stringify(l).replace(/"/g,'&quot;')})"/>`;
+    html += `<polygon points="${l.tx},${l.ty-5} ${l.tx-4},${l.ty+4} ${l.tx+4},${l.ty+4}" fill="${col}" fill-opacity="0.7" style="cursor:pointer" onclick="openPopup(${JSON.stringify(l).replace(/"/g,'&quot;')})"/>`;
+  });
+  svg.innerHTML = html;
+}
+
+function buildLineupRows(map) {
+  const container = document.getElementById('lineup-rows');
+  container.innerHTML = map.lineups.map(l => `
+    <div class="lineup-row" onclick='openPopup(${JSON.stringify(l)})'>
+      <div class="lineup-row-dot" style="background:${NADE_COLORS[l.type]}"></div>
+      <div class="lineup-row-info">
+        <div class="lineup-row-title">${l.name}</div>
+        <div class="lineup-row-sub">${l.from} → ${l.to}</div>
+      </div>
+      <span class="lineup-row-arr">›</span>
+    </div>
+  `).join('');
+}
+
+function showDetail(mapId) {
+  currentMap = MAPS.find(m => m.id === mapId);
+  document.getElementById('detail-map-name').textContent = currentMap.name;
+  buildMinimapSVG(currentMap);
+  buildLineupRows(currentMap);
+  document.getElementById('screen-maps').classList.remove('active');
+  document.getElementById('screen-detail').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function showMaps() {
+  document.getElementById('screen-detail').classList.remove('active');
+  document.getElementById('screen-maps').classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function openPopup(lineup) {
+  if (typeof lineup === 'string') lineup = JSON.parse(lineup);
+  currentLineup = lineup;
+  document.getElementById('popup-title').textContent = lineup.name;
+  const nadeEl = document.getElementById('popup-nade');
+  nadeEl.textContent = lineup.type.toUpperCase();
+  nadeEl.className = 'popup-nade nade-' + lineup.type;
+  document.getElementById('popup-note').textContent = lineup.note;
+  const imgStand = document.getElementById('popup-img-stand');
+  const imgAim = document.getElementById('popup-img-aim');
+  imgStand.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="20" r="10" fill="none" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="30" y1="30" x2="30" y2="50" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="15" y1="38" x2="30" y2="32" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="45" y1="38" x2="30" y2="32" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="22" y1="60" x2="30" y2="50" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="38" y1="60" x2="30" y2="50" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/></svg>`;
+  imgAim.innerHTML = `<svg width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="22" fill="none" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><circle cx="30" cy="30" r="6" fill="none" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="30" y1="2" x2="30" y2="16" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="30" y1="44" x2="30" y2="58" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="2" y1="30" x2="16" y2="30" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/><line x1="44" y1="30" x2="58" y2="30" stroke="${NADE_COLORS[lineup.type]}" stroke-width="2"/></svg>`;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function closePopup(e) {
+  if (!e || e.target === document.getElementById('overlay') || e.currentTarget === document.querySelector('.close-btn')) {
+    document.getElementById('overlay').classList.remove('open');
+  }
+}
+
+renderMaps();
+</script>
