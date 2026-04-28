@@ -53,10 +53,12 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 }
 .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
 .logo-mark {
-  width: 34px; height: 34px; background: var(--purple);
-  border-radius: 8px; display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 13px; color: #fff; letter-spacing: -0.5px;
+  width: 34px; height: 34px; border-radius: 8px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--purple); flex-shrink: 0;
 }
+.logo-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.logo-mark .logo-mark-fallback { font-weight: 900; font-size: 13px; color: #fff; letter-spacing: -0.5px; }
 .logo-text { font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
 .logo-text span { color: var(--purple2); }
 .nav-spacer { flex: 1; }
@@ -77,28 +79,13 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 .hero p { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 340px; margin-bottom: 24px; }
 
 .hero-stats { display: flex; gap: 20px; }
-.stat { }
 .stat-n { font-size: 22px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
 .stat-l { font-size: 11px; color: var(--text3); margin-top: 1px; letter-spacing: .5px; }
 
-/* Filter bar */
-.filter-bar {
-  display: flex; gap: 8px; padding: 14px 20px;
-  overflow-x: auto; border-bottom: 1px solid var(--border);
-  scrollbar-width: none;
-}
-.filter-bar::-webkit-scrollbar { display: none; }
-.filter-pill {
-  flex-shrink: 0; background: var(--bg2); border: 1px solid var(--border);
-  color: var(--text2); font-size: 12px; font-weight: 500; padding: 6px 14px;
-  border-radius: 20px; transition: all .15s; white-space: nowrap;
-}
-.filter-pill.active, .filter-pill:hover {
-  background: var(--purple-bg); border-color: var(--purple); color: var(--purple2);
-}
+
 
 /* Map grid */
-.maps-section { padding: 16px 20px 100px; }
+.maps-section { padding: 20px 20px 100px; }
 .maps-section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .maps-section-header h2 { font-size: 13px; font-weight: 600; color: var(--text2); letter-spacing: .5px; }
 .maps-section-header span { font-size: 11px; color: var(--text3); background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; }
@@ -118,7 +105,7 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
   width: 100%; aspect-ratio: 16/9; background: var(--bg3);
   display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative;
 }
-.map-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; filter: brightness(.7) saturate(.8); }
+.map-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; padding: 16px; filter: brightness(.95); }
 .map-thumb-placeholder { color: var(--text3); font-size: 11px; letter-spacing: 1px; text-transform: uppercase; }
 .map-thumb-overlay {
   position: absolute; inset: 0;
@@ -165,22 +152,22 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 .detail-nav-spacer { flex: 1; }
 .detail-nav-count { font-size: 11px; color: var(--text3); background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 2px 9px; }
 
-/* Minimap */
-.minimap-section { padding: 14px; }
-.minimap-container {
+/* radar */
+.radar-section { padding: 14px; }
+.radar-container {
   position: relative; border-radius: var(--r2); overflow: hidden;
   background: var(--bg2); border: 1px solid var(--border);
 }
-.minimap-img { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
-.minimap-placeholder {
+.radar-img { width: 100%; display: block; aspect-ratio: 1/1; object-fit: cover; }
+.radar-placeholder {
   width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center;
   background: var(--bg2); color: var(--text3); font-size: 12px; letter-spacing: 1px;
 }
-.minimap-svg-overlay {
+.radar-svg-overlay {
   position: absolute; inset: 0; width: 100%; height: 100%;
   pointer-events: none;
 }
-.minimap-svg-overlay .pin { pointer-events: all; cursor: pointer; }
+.radar-svg-overlay .pin { pointer-events: all; cursor: pointer; }
 
 /* Filter tabs */
 .type-tabs {
@@ -287,9 +274,42 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
   width: 100%; aspect-ratio: 4/3;
   background: var(--bg3); display: flex; align-items: center; justify-content: center;
   overflow: hidden; margin-top: 8px;
+  cursor: zoom-in; position: relative;
 }
 .step-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .step-img-placeholder { opacity: .2; }
+/* zoom hint icon — only visible when image is loaded */
+.step-img .zoom-hint {
+  display: none; position: absolute; bottom: 6px; right: 6px;
+  background: rgba(0,0,0,.55); border-radius: 4px; padding: 2px 5px;
+  font-size: 11px; color: rgba(255,255,255,.7); pointer-events: none; line-height: 1.4;
+}
+.step-img.has-img .zoom-hint { display: block; }
+
+/* Lightbox */
+.lightbox {
+  display: none; position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.93); align-items: center; justify-content: center;
+  backdrop-filter: blur(10px); cursor: zoom-out;
+}
+.lightbox.open { display: flex; }
+.lightbox-img {
+  max-width: 96vw; max-height: 88vh; border-radius: var(--r2);
+  box-shadow: 0 24px 64px rgba(0,0,0,.8); cursor: default; display: block;
+}
+.lightbox-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 36px; height: 36px; background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: 50%; color: var(--text2); font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all .15s;
+}
+.lightbox-close:hover { background: var(--bg3); color: var(--text); }
+.lightbox-label {
+  position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+  font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text3); background: var(--bg1); border: 1px solid var(--border);
+  padding: 4px 14px; border-radius: 20px; white-space: nowrap;
+}
 
 /* Note */
 .popup-note-wrap { padding: 14px 16px 0; }
@@ -304,7 +324,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 .getpos-wrap { padding: 14px 16px 0; }
 .getpos-label { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
 .getpos-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-.getpos-sublabel { font-size: 10px; color: var(--text3); width: 38px; flex-shrink: 0; letter-spacing: .3px; text-transform: uppercase; font-weight: 600; }
 .getpos-box {
   flex: 1; background: var(--bg); border: 1px solid var(--border);
   border-radius: var(--r); padding: 8px 10px;
@@ -321,16 +340,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 }
 .copy-btn:hover { border-color: var(--purple); color: var(--purple2); background: var(--purple-bg); }
 .copy-btn.copied { border-color: var(--smoke); color: var(--smoke); background: rgba(78,203,141,.1); }
-
-/* File path hint */
-.filepath-wrap { padding: 10px 16px 0; }
-.filepath-box {
-  background: var(--bg); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 8px 12px;
-  font-size: 10px; font-family: 'Courier New', monospace;
-  color: var(--text3); line-height: 2; letter-spacing: .3px;
-}
-.filepath-box strong { color: var(--text2); }
 
 .popup-close {
   display: block; width: calc(100% - 32px); margin: 16px 16px 0;
@@ -364,10 +373,13 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
 ═══════════════════════════════════-->
 <div id="s-home" class="screen active">
   <nav class="home-nav">
-    <div class="logo">
-      <div class="logo-mark">UM</div>
+    <a class="logo" href="#">
+      <div class="logo-mark">
+        <img src="images/logo.png" alt="utilMate" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <span class="logo-mark-fallback" style="display:none">UM</span>
+      </div>
       <div class="logo-text">util<span>Mate</span></div>
-    </div>
+    </a>
     <div class="nav-spacer"></div>
     <div class="nav-tag">CS2</div>
   </nav>
@@ -377,14 +389,6 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
     <h1>Perfect utility.<br><em>Every round.</em></h1>
     <p>The smart way to find, learn and master CS2 grenade lineups — with exact positions from the game.</p>
     <div class="hero-stats" id="hero-stats"></div>
-  </div>
-
-  <div class="filter-bar" id="filter-bar">
-    <button class="filter-pill active" data-filter="all">All Maps</button>
-    <button class="filter-pill" data-filter="smoke">Smokes</button>
-    <button class="filter-pill" data-filter="flash">Flashes</button>
-    <button class="filter-pill" data-filter="molotov">Molotovs</button>
-    <button class="filter-pill" data-filter="he">HE Grenades</button>
   </div>
 
   <div class="maps-section">
@@ -407,11 +411,11 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
     <div class="detail-nav-count" id="d-count">—</div>
   </div>
 
-  <div class="minimap-section">
-    <div class="minimap-container" id="minimap-container">
-      <div class="minimap-placeholder" id="minimap-placeholder">Drop minimap.png here</div>
-      <img class="minimap-img" id="minimap-img" style="display:none" alt="minimap">
-      <svg class="minimap-svg-overlay" id="minimap-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="radar-section">
+    <div class="radar-container" id="radar-container">
+      <div class="radar-placeholder" id="radar-placeholder">Drop radar.png here</div>
+      <img class="radar-img" id="radar-img" style="display:none" alt="radar">
+      <svg class="radar-svg-overlay" id="radar-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
   </div>
 
@@ -459,13 +463,13 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
     </div>
 
     <div class="popup-steps">
-      <!-- Stand -->
+      <!-- Step 1: Position -->
       <div class="step-card">
         <div class="step-num-row">
           <div class="step-num">1</div>
           <div class="step-label">Position</div>
         </div>
-        <div class="step-img" id="p-img-stand">
+        <div class="step-img" id="p-img-stand" onclick="openLightbox('stand')">
           <svg class="step-img-placeholder" width="44" height="44" viewBox="0 0 60 60">
             <circle cx="30" cy="20" r="10" fill="none" stroke="#888" stroke-width="2"/>
             <line x1="30" y1="30" x2="30" y2="50" stroke="#888" stroke-width="2"/>
@@ -474,15 +478,16 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
             <line x1="22" y1="58" x2="30" y2="50" stroke="#888" stroke-width="2"/>
             <line x1="38" y1="58" x2="30" y2="50" stroke="#888" stroke-width="2"/>
           </svg>
+          <span class="zoom-hint">⤢</span>
         </div>
       </div>
-      <!-- Aim -->
+      <!-- Step 2: Aim -->
       <div class="step-card">
         <div class="step-num-row">
           <div class="step-num">2</div>
           <div class="step-label">Aim</div>
         </div>
-        <div class="step-img" id="p-img-aim">
+        <div class="step-img" id="p-img-aim" onclick="openLightbox('aim')">
           <svg class="step-img-placeholder" width="44" height="44" viewBox="0 0 60 60">
             <circle cx="30" cy="30" r="22" fill="none" stroke="#888" stroke-width="2"/>
             <circle cx="30" cy="30" r="6"  fill="none" stroke="#888" stroke-width="2"/>
@@ -491,10 +496,11 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
             <line x1="2"  y1="30" x2="16" y2="30" stroke="#888" stroke-width="2"/>
             <line x1="44" y1="30" x2="58" y2="30" stroke="#888" stroke-width="2"/>
           </svg>
+          <span class="zoom-hint">⤢</span>
         </div>
       </div>
-      <!-- Throw (step 3 full width) -->
-      <div class="step-card" style="grid-column:1/-1">
+      <!-- Step 3: Throw note — half width -->
+      <div class="step-card">
         <div class="step-num-row">
           <div class="step-num">3</div>
           <div class="step-label">Throw</div>
@@ -502,31 +508,47 @@ button { font-family: 'Inter', sans-serif; cursor: pointer; }
         </div>
         <div style="padding:10px 12px 12px;font-size:12px;color:var(--text2);line-height:1.6" id="p-throw-note"></div>
       </div>
+      <!-- Step 4: Result -->
+      <div class="step-card">
+        <div class="step-num-row">
+          <div class="step-num">4</div>
+          <div class="step-label">Result</div>
+        </div>
+        <div class="step-img" id="p-img-result" onclick="openLightbox('result')">
+          <svg class="step-img-placeholder" width="44" height="44" viewBox="0 0 60 60">
+            <circle cx="30" cy="30" r="18" fill="none" stroke="#888" stroke-width="2" stroke-dasharray="4,3"/>
+            <circle cx="30" cy="30" r="7" fill="none" stroke="#888" stroke-width="2"/>
+            <circle cx="30" cy="30" r="2.5" fill="#888"/>
+            <line x1="30" y1="4" x2="30" y2="12" stroke="#888" stroke-width="1.5"/>
+            <line x1="56" y1="30" x2="48" y2="30" stroke="#888" stroke-width="1.5"/>
+            <line x1="30" y1="56" x2="30" y2="48" stroke="#888" stroke-width="1.5"/>
+            <line x1="4" y1="30" x2="12" y2="30" stroke="#888" stroke-width="1.5"/>
+          </svg>
+          <span class="zoom-hint">⤢</span>
+        </div>
+      </div>
     </div>
 
     <div class="getpos-wrap">
-      <div class="getpos-label">📍 In-game Position</div>
+      <div class="getpos-label">📍 Position</div>
       <div class="getpos-row">
-        <div class="getpos-sublabel">Stand</div>
-        <div class="getpos-box" id="p-gp-stand">—</div>
-        <button class="copy-btn" onclick="copyGetpos('stand')" title="Copy">⧉</button>
-      </div>
-      <div class="getpos-row">
-        <div class="getpos-sublabel">Aim</div>
-        <div class="getpos-box" id="p-gp-aim">—</div>
-        <button class="copy-btn" onclick="copyGetpos('aim')" title="Copy">⧉</button>
+        <div class="getpos-box" id="p-gp-pos">—</div>
+        <button class="copy-btn" id="copy-pos-btn" onclick="copyGetpos()" title="Copy to clipboard">⧉</button>
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.6">
-        In CS2 console: enable cheats (<code style="color:var(--purple2)">sv_cheats 1</code>), then paste the <code style="color:var(--purple2)">setpos</code> command to teleport exactly.
+        In CS2 console: enable cheats (<code style="color:var(--purple2)">sv_cheats 1</code>), then paste the <code style="color:var(--purple2)">setpos</code> command to teleport to the exact stand position.
       </div>
-    </div>
-
-    <div class="filepath-wrap">
-      <div class="filepath-box" id="p-paths">—</div>
     </div>
 
     <button class="popup-close" onclick="closePopup()">✕ &nbsp;Close</button>
   </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img class="lightbox-img" id="lightbox-img" src="" alt="">
+  <div class="lightbox-label" id="lightbox-label">—</div>
 </div>
 
 <script>
@@ -550,7 +572,6 @@ async function init() {
     MAPS = [];
   }
   renderHome();
-  setupHomeFilters();
 }
 
 // ─── HOME ───────────────────────────────────────────
@@ -591,7 +612,7 @@ function renderMapGrid(filter) {
 
     return `<div class="map-card${soon?' soon':''}" ${clickFn?`onclick="${clickFn}"`:''}>
       <div class="map-thumb">
-        <img src="images/${m.id}/minimap.png" alt="${m.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+        <img src="images/${m.id}/logo.png" alt="${m.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="map-thumb-placeholder" style="display:none">${m.name}</div>
         <div class="map-thumb-overlay"></div>
       </div>
@@ -622,12 +643,12 @@ function showDetail(mapId, preFilter) {
 
   document.getElementById('d-map-name').textContent = currentMap.name;
 
-  // minimap
-  const img = document.getElementById('minimap-img');
-  const ph  = document.getElementById('minimap-placeholder');
-  img.src = currentMap.minimap;
-  img.onload  = () => { img.style.display = 'block'; ph.style.display = 'none'; buildMinimapPins(activeType); };
-  img.onerror = () => { img.style.display = 'none';  ph.style.display = 'flex'; buildMinimapPins(activeType); };
+  // radar
+  const img = document.getElementById('radar-img');
+  const ph  = document.getElementById('radar-placeholder');
+  img.src = currentMap.radar;
+  img.onload  = () => { img.style.display = 'block'; ph.style.display = 'none'; buildradarPins(activeType); };
+  img.onerror = () => { img.style.display = 'none';  ph.style.display = 'flex'; buildradarPins(activeType); };
 
   // type tabs
   activeType = preFilter || 'all';
@@ -637,13 +658,13 @@ function showDetail(mapId, preFilter) {
       document.querySelectorAll('.type-tab').forEach(x => x.classList.remove('active'));
       t.classList.add('active');
       activeType = t.dataset.type;
-      buildMinimapPins(activeType);
+      buildradarPins(activeType);
       buildLineupRows(activeType);
       updateSectionLabel(activeType);
     };
   });
 
-  buildMinimapPins(activeType);
+  buildradarPins(activeType);
   buildLineupRows(activeType);
   updateSectionLabel(activeType);
   setScreen('s-detail');
@@ -656,11 +677,11 @@ function updateSectionLabel(type) {
   document.getElementById('d-count').textContent = lines.length + ' lineup' + (lines.length !== 1 ? 's' : '');
 }
 
-// ─── MINIMAP PINS ────────────────────────────────────
-// fx/fy and tx/ty are percentages (0–100) on the minimap image.
+// ─── radar PINS ────────────────────────────────────
+// fx/fy and tx/ty are percentages (0–100) on the radar image.
 // SVG viewBox is also 0 100 so values map 1:1.
-function buildMinimapPins(typeFilter) {
-  const svg = document.getElementById('minimap-svg');
+function buildradarPins(typeFilter) {
+  const svg = document.getElementById('radar-svg');
   const lines = typeFilter === 'all'
     ? currentMap.lineups
     : currentMap.lineups.filter(l => l.type === typeFilter);
@@ -725,11 +746,16 @@ function buildLineupRows(typeFilter) {
 }
 
 // ─── POPUP ───────────────────────────────────────────
+const stepSrcs = {};
+
 function openPopup(lineup) {
   if (typeof lineup === 'string') lineup = JSON.parse(lineup);
   currentLineup = lineup;
 
-  const c = NADE_COLOR[lineup.type];
+  // store image srcs for lightbox
+  stepSrcs.stand  = lineup.stand_img  || null;
+  stepSrcs.aim    = lineup.aim_img    || null;
+  stepSrcs.result = lineup.result_img || null;
 
   // breadcrumb + title
   document.getElementById('p-bread').textContent =
@@ -746,45 +772,61 @@ function openPopup(lineup) {
     lineup.throw      ? `<span class="p-tag p-tag-throw">${lineup.throw}</span>` : '',
   ].join('');
 
-  // throw note (step 3)
-  document.getElementById('p-throw-type').textContent  = lineup.throw || '';
-  document.getElementById('p-throw-note').textContent  = lineup.note;
+  // throw step
+  document.getElementById('p-throw-type').textContent = lineup.throw || '';
+  document.getElementById('p-throw-note').textContent = lineup.note;
 
-  // images
-  setStepImg('stand', lineup.stand_img);
-  setStepImg('aim',   lineup.aim_img);
+  // load images
+  setStepImg('stand',  lineup.stand_img);
+  setStepImg('aim',    lineup.aim_img);
+  setStepImg('result', lineup.result_img);
 
-  // getpos
-  document.getElementById('p-gp-stand').textContent = lineup.getpos_stand || '—';
-  document.getElementById('p-gp-aim').textContent   = lineup.getpos_aim   || '—';
-
-  // file paths hint
-  document.getElementById('p-paths').innerHTML =
-    `<strong>${lineup.stand_img || `images/${currentMap.id}/${lineup.id}_stand.jpg`}</strong><br>` +
-    `<strong>${lineup.aim_img   || `images/${currentMap.id}/${lineup.id}_aim.jpg`}</strong>`;
+  // single position field
+  document.getElementById('p-gp-pos').textContent = lineup.getpos_stand || '—';
 
   document.getElementById('overlay').classList.add('open');
 }
 
 function setStepImg(side, src) {
   const el = document.getElementById(`p-img-${side}`);
-  if (src) {
-    const img = new Image();
-    img.onload  = () => { el.innerHTML = ''; el.appendChild(img); img.style.cssText = 'width:100%;height:100%;object-fit:cover'; };
-    img.onerror = () => { /* keep placeholder */ };
-    img.src = src;
-  }
+  if (!el) return;
+  if (!src) return;
+  const img = new Image();
+  img.onload = () => {
+    const hint = el.querySelector('.zoom-hint');
+    el.innerHTML = '';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block';
+    el.appendChild(img);
+    if (hint) el.appendChild(hint);
+    el.classList.add('has-img');
+  };
+  img.src = src;
 }
 
-function copyGetpos(side) {
-  const val = document.getElementById(`p-gp-${side}`).textContent;
+function copyGetpos() {
+  const val = document.getElementById('p-gp-pos').textContent;
   if (!val || val === '—') return;
   navigator.clipboard.writeText(val).then(() => {
-    const btn = event.currentTarget;
+    const btn = document.getElementById('copy-pos-btn');
     btn.classList.add('copied');
     btn.textContent = '✓';
     setTimeout(() => { btn.classList.remove('copied'); btn.textContent = '⧉'; }, 1500);
   });
+}
+
+function openLightbox(side) {
+  const src = stepSrcs[side];
+  if (!src) return;
+  const labels = { stand: 'Position', aim: 'Aim', result: 'Result' };
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox-label').textContent = labels[side] || side;
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function closeLightbox(e) {
+  if (!e || e.target === document.getElementById('lightbox') || e.currentTarget.classList.contains('lightbox-close')) {
+    document.getElementById('lightbox').classList.remove('open');
+  }
 }
 
 function closePopup() { document.getElementById('overlay').classList.remove('open'); }
